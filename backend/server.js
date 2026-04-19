@@ -48,17 +48,38 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start server
-const PORT = process.env.PORT || 5000;
+// Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/jobtracker';
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(MONGO_URI, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+    });
+    isConnected = true;
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
+    throw err;
+  }
+};
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   });
+} else {
+  // For Vercel serverless
+  connectDB().catch((err) => {
+    console.error('Failed to connect to MongoDB:', err);
+  });
+}
+
+// Export for Vercel serverless
+module.exports = app;
