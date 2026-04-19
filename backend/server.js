@@ -47,7 +47,13 @@ app.get('/', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection?.readyState; // 0=disconnected,1=connected,2=connecting,3=disconnecting
+  res.json({
+    status: 'ok',
+    db: typeof dbState === 'number' ? dbState : 'unknown',
+  });
+});
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -78,9 +84,11 @@ const connectDB = async () => {
   }
 };
 
-<<<<<<< HEAD
-// Ensure DB connection exists before handling requests (serverless-safe)
+// Ensure DB connection exists before DB-backed routes (serverless-safe)
 app.use(async (req, res, next) => {
+  // Allow basic endpoints to respond even when DB is down/misconfigured
+  if (req.path === '/' || req.path === '/api/health') return next();
+
   try {
     await connectDB();
     next();
@@ -109,19 +117,6 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Failed to connect to MongoDB:', err);
       process.exitCode = 1;
     });
-=======
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  connectDB().then(() => {
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  });
-} else {
-  // For Vercel serverless
-  connectDB().catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
-  });
->>>>>>> 3f1318cb46aee8a98d9de06041556961dcb4d984
 }
 
 // Export for Vercel serverless
