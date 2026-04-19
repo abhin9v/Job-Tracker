@@ -84,7 +84,11 @@ const connectDB = async () => {
   }
 };
 
+<<<<<<< HEAD
 // Ensure DB connection exists before DB-backed routes (serverless-safe)
+=======
+// Ensure DB connection exists before handling requests (serverless-safe)
+>>>>>>> 0ebc300096bd3e44bb4f944932b49223f3c722af
 app.use(async (req, res, next) => {
   // Allow basic endpoints to respond even when DB is down/misconfigured
   if (req.path === '/' || req.path === '/api/health') return next();
@@ -117,7 +121,10 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Failed to connect to MongoDB:', err);
       process.exitCode = 1;
     });
+<<<<<<< HEAD
+=======
+} else {
+  // For Vercel serverless
+  module.exports = app;
+>>>>>>> 0ebc300096bd3e44bb4f944932b49223f3c722af
 }
-
-// Export for Vercel serverless
-module.exports = app;
