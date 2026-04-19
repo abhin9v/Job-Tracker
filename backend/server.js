@@ -78,7 +78,6 @@ const connectDB = async () => {
   }
 };
 
-<<<<<<< HEAD
 // Ensure DB connection exists before handling requests (serverless-safe)
 app.use(async (req, res, next) => {
   try {
@@ -109,20 +108,7 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Failed to connect to MongoDB:', err);
       process.exitCode = 1;
     });
-=======
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  connectDB().then(() => {
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  });
 } else {
   // For Vercel serverless
-  connectDB().catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
-  });
->>>>>>> 3f1318cb46aee8a98d9de06041556961dcb4d984
+  module.exports = app;
 }
-
-// Export for Vercel serverless
-module.exports = app;
