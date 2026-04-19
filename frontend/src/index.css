@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --surface-2: #f1f3f7;
+    --border: #e4e7ed;
+    --text: #0f1117;
+    --text-muted: #6b7280;
+    --accent: #0d93e7;
+    --accent-hover: #0174c5;
+  }
+
+  .dark {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface-2: #1a1e2a;
+    --border: #252a38;
+    --text: #f0f2f7;
+    --text-muted: #8b93a8;
+    --accent: #37adf6;
+    --accent-hover: #7cc9fb;
+  }
+
+  * { @apply border-[var(--border)]; }
+  body {
+    @apply bg-[var(--bg)] text-[var(--text)] font-sans transition-colors duration-200;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm;
+  }
+
+  .input {
+    @apply w-full px-3.5 py-2.5 bg-[var(--surface-2)] border border-[var(--border)]
+           rounded-xl text-[var(--text)] placeholder-[var(--text-muted)]
+           focus:outline-none focus:ring-2 focus:ring-[rgba(var(--accent),0.3)] focus:border-[var(--accent)]
+           transition-all duration-150 text-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)]
+           text-white rounded-xl font-medium text-sm transition-all duration-150
+           active:scale-[0.98] shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--surface-2)] hover:bg-[var(--border)]
+           text-[var(--text)] rounded-xl font-medium text-sm transition-all duration-150
+           border border-[var(--border)] active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-2 hover:bg-[var(--surface-2)]
+           text-[var(--text-muted)] hover:text-[var(--text)] rounded-xl font-medium text-sm
+           transition-all duration-150 active:scale-[0.98];
+  }
+
+  .label {
+    @apply block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+/* Status badge colors */
+.status-Applied    { @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300; }
+.status-OA         { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300; }
+.status-Interview  { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300; }
+.status-Offer      { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
+.status-Rejected   { @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300; }
+.status-Ghosted    { @apply bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400; }
+
+/* Kanban column accent */
+.kanban-col-Applied   { @apply border-t-blue-400; }
+.kanban-col-OA        { @apply border-t-purple-400; }
+.kanban-col-Interview { @apply border-t-amber-400; }
+.kanban-col-Offer     { @apply border-t-emerald-400; }
+.kanban-col-Rejected  { @apply border-t-red-400; }
+.kanban-col-Ghosted   { @apply border-t-gray-400; }
