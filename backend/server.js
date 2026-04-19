@@ -20,7 +20,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) return callback(null, true);
+
+    const isExplicitlyAllowed = allowedOrigins.includes(origin);
+    const isVercelPreview = /^https?:\/\/.+\.vercel\.app$/i.test(origin);
+
+    if (isExplicitlyAllowed || (process.env.NODE_ENV === 'production' && isVercelPreview)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -35,6 +40,11 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/stats', statsRoutes);
+
+// Root route (useful for quick checks)
+app.get('/', (req, res) => {
+  res.status(200).send('JobFlow API is running. Try /api/health');
+});
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -68,17 +78,36 @@ const connectDB = async () => {
   }
 };
 
+// Ensure DB connection exists before handling requests (serverless-safe)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // For local development
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  connectDB().then(() => {
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-  });
-} else {
-  // For Vercel serverless
-  connectDB().catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
-  });
+  connectDB()
+    .then(() => {
+      const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+      server.on('error', (err) => {
+        if (err && err.code === 'EADDRINUSE') {
+          console.error(`❌ Port ${PORT} is already in use. Stop the other process or set PORT to a free port.`);
+          process.exitCode = 1;
+          return;
+        }
+        console.error('❌ Server failed to start:', err);
+        process.exitCode = 1;
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB:', err);
+      process.exitCode = 1;
+    });
 }
 
 // Export for Vercel serverless
