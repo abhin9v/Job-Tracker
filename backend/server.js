@@ -2,6 +2,7 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 import morgan from 'morgan';
+import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
 
 import authRoutes from './routes/auth.js';
@@ -73,17 +74,22 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message, ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
 
-// Initialize DB connection on startup
-let dbConnected = false;
+// Local startup support
+const __filename = fileURLToPath(import.meta.url);
+const PORT = process.env.PORT || 5000;
 
-if (process.env.NODE_ENV !== 'production') {
-  // Local development
-  connectDB().then(() => {
-    dbConnected = true;
-    console.log('✅ Database connected');
-  }).catch((err) => {
-    console.error('❌ Database connection failed:', err.message);
-  });
+if (process.argv[1] === __filename) {
+  connectDB()
+    .then(() => {
+      console.log('✅ Database connected');
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('❌ Database connection failed:', err.message);
+      process.exit(1);
+    });
 }
 
 export default app;

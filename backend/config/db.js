@@ -12,8 +12,8 @@ export const connectDB = async () => {
   if (!cached.promise) {
     const opts = {
       dbName: 'jobtracker',
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 60000,
     };
 
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).catch((err) => {
