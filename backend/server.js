@@ -12,7 +12,7 @@ import statsRoutes from './routes/stats.js';
 const app = express();
 
 
-// 🌐 CORS
+// 🌐 CORS (clean + correct)
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
@@ -21,20 +21,26 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin(origin, callback) {
+  origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-
-    const isVercelPreview = /^https?:\/\/.+\.vercel\.app$/i.test(origin);
-    if (process.env.NODE_ENV === 'production' && isVercelPreview) {
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    callback(new Error('Not allowed by CORS'));
+    // allow all Vercel preview deployments
+    if (/^https?:\/\/.+\.vercel\.app$/i.test(origin)) {
+      return callback(null, true);
+    }
+
+    console.log("❌ Blocked by CORS:", origin);
+    return callback(null, false); // do NOT throw error
   },
-  credentials: true
+  credentials: true,
 }));
+
+// 🔥 handle preflight requests properly
+app.options('*', cors());
 
 
 // 📦 Middleware
@@ -70,11 +76,19 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error('\n❌ Error:', err);
   const status = err.status || 500;
-  const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message;
-  res.status(status).json({ message, ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
+  const message =
+    process.env.NODE_ENV === 'production'
+      ? 'Internal Server Error'
+      : err.message;
+
+  res.status(status).json({
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
 });
 
-// Local startup support
+
+// Local startup support (only runs locally, not on Vercel)
 const __filename = fileURLToPath(import.meta.url);
 const PORT = process.env.PORT || 5000;
 
