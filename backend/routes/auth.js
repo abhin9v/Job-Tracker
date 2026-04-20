@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
-import connectDB from '../config/db.js'; // 🔥 ADD THIS
+import { connectDB } from '../config/db.js'; // 🔥 ADD THIS
 
 const router = express.Router();
 
