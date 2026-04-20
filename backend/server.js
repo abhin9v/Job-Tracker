@@ -1,24 +1,14 @@
-import express from 'express'
-import "dotenv/config";
+import express from 'express';
+import 'dotenv/config';
 import cors from 'cors';
 import morgan from 'morgan';
-import connectDB from './config/db.js';
+import { connectDB } from './config/db.js';
 
 import authRoutes from './routes/auth.js';
 import applicationRoutes from './routes/applications.js';
 import statsRoutes from './routes/stats.js';
 
 const app = express();
-
-
-// 🔥 Connect DB (same as your working project)
-try {
-  await connectDB();
-  console.log("✅ Database connection successful");
-} catch (error) {
-  console.error("❌ Database connection failed:", error.message);
-  process.exit(1);
-}
 
 
 // 🌐 CORS
@@ -77,13 +67,23 @@ app.use((req, res) => {
 
 // ⚠️ Error handler
 app.use((err, req, res, next) => {
-  console.error(err.message);
-  res.status(500).json({ message: err.message });
+  console.error('\n❌ Error:', err);
+  const status = err.status || 500;
+  const message = process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message;
+  res.status(status).json({ message, ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
 
+// Initialize DB connection on startup
+let dbConnected = false;
 
-const PORT = process.env.PORT || 5000;
+if (process.env.NODE_ENV !== 'production') {
+  // Local development
+  connectDB().then(() => {
+    dbConnected = true;
+    console.log('✅ Database connected');
+  }).catch((err) => {
+    console.error('❌ Database connection failed:', err.message);
+  });
+}
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+export default app;

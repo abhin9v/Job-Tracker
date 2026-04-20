@@ -1,6 +1,7 @@
 {
   "name": "job-tracker-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Job Application Tracker API",
   "main": "server.js",
   "scripts": {

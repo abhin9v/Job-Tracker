@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import Application from '../models/Application.js';
+import { protect } from '../middleware/auth.js';
+
 const router = express.Router();
-const Application = require('../models/Application');
-const { protect } = require('../middleware/auth');
 
 router.use(protect);
 
@@ -58,4 +59,4 @@ router.get('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

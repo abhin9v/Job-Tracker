@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { body, validationResult } from 'express-validator';
+import Application from '../models/Application.js';
+import { protect } from '../middleware/auth.js';
+
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-const Application = require('../models/Application');
-const { protect } = require('../middleware/auth');
 
 // All routes are protected
 router.use(protect);
@@ -145,4 +146,4 @@ router.patch('/:id/star', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

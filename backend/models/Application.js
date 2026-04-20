@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const interviewRoundSchema = new mongoose.Schema({
   round: { type: Number, required: true },
@@ -72,4 +72,4 @@ const applicationSchema = new mongoose.Schema(
 applicationSchema.index({ user: 1, status: 1 });
 applicationSchema.index({ user: 1, dateApplied: -1 });
 
-module.exports = mongoose.model('Application', applicationSchema);
+export default mongoose.model('Application', applicationSchema);
