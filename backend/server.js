@@ -20,32 +20,48 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(cors({
+const vercelPreviewOrigin = /^https?:\/\/.+\.vercel\.app$/i;
+const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || vercelPreviewOrigin.test(origin)) {
       return callback(null, true);
     }
 
-    // allow all Vercel preview deployments
-    if (/^https?:\/\/.+\.vercel\.app$/i.test(origin)) {
-      return callback(null, true);
-    }
-
-    console.log("❌ Blocked by CORS:", origin);
-    return callback(null, false); // do NOT throw error
+    console.log('❌ Blocked by CORS:', origin);
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204,
+};
 
-// 🔥 handle preflight requests properly
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+
+// 🔥 ensure DB connection for serverless deployments
+let dbConnected = false;
+const ensureDBConnection = async (req, res, next) => {
+  if (dbConnected) return next();
+
+  try {
+    await connectDB();
+    dbConnected = true;
+    next();
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+};
 
 
 // 📦 Middleware
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(ensureDBConnection);
 
 
 // 🚀 Routes
