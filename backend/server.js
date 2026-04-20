@@ -1,8 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
+
+const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
 const applicationRoutes = require('./routes/applications');
@@ -10,11 +11,24 @@ const statsRoutes = require('./routes/stats');
 
 const app = express();
 
-// Middleware
+
+// 🔥 DB connection middleware (ONLY ONCE)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("DB Error:", err);
+    return res.status(500).json({ message: "Database connection failed" });
+  }
+});
+
+
+// 🌐 CORS
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.CLIENT_URL,
+  'https://job-tracker-six-weld.vercel.app',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -33,82 +47,64 @@ app.use(cors({
   },
   credentials: true
 }));
+
+
+// 📦 Middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Routes
+
+// 🚀 Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/stats', statsRoutes);
 
-// Root route (useful for quick checks)
+
+// 🏠 Root
 app.get('/', (req, res) => {
-  res.status(200).send('JobFlow API is running. Try /api/health');
+  res.status(200).json({ message: 'JobFlow API is running. Try /api/health' });
 });
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// Global error handler
+// ❤️ Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+
+
+// ❌ 404
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+
+// ⚠️ Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.message);
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
-// Connect to MongoDB
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/jobtracker';
 
-let isConnected = false;
-
-const connectDB = async () => {
-  if (isConnected) return;
-  try {
-    await mongoose.connect(MONGO_URI, {
-      bufferCommands: false,
-      maxPoolSize: 10,
-    });
-    isConnected = true;
-    console.log('✅ MongoDB connected');
-  } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message);
-    throw err;
-  }
-};
-
-// Ensure DB connection exists before handling requests (serverless-safe)
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// For local development
+// 🖥️ Local dev server
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
+
   connectDB()
     .then(() => {
-      const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-      server.on('error', (err) => {
-        if (err && err.code === 'EADDRINUSE') {
-          console.error(`❌ Port ${PORT} is already in use. Stop the other process or set PORT to a free port.`);
-          process.exitCode = 1;
-          return;
-        }
-        console.error('❌ Server failed to start:', err);
-        process.exitCode = 1;
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
       });
     })
     .catch((err) => {
-      console.error('Failed to connect to MongoDB:', err);
-      process.exitCode = 1;
+      console.error('❌ Failed to connect to MongoDB:', err.message);
+      process.exit(1);
     });
+
 } else {
-  // For Vercel serverless
+  // ☁️ Vercel serverless
   module.exports = app;
 }
