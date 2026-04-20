@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+mongoose.set('bufferTimeoutMS', 30000); // 🔥 IMPORTANT FIX
+
 let cached = global.mongoose || { conn: null, promise: null };
 
 if (!global.mongoose) {
@@ -7,7 +9,14 @@ if (!global.mongoose) {
 }
 
 export const connectDB = async () => {
-  if (cached.conn) return cached.conn;
+  if (!process.env.MONGO_URI) {
+    throw new Error('MONGO_URI is required but not set');
+  }
+
+  if (cached.conn) {
+    console.log("⚡ Using cached DB connection");
+    return cached.conn;
+  }
 
   if (!cached.promise) {
     const opts = {
@@ -16,10 +25,18 @@ export const connectDB = async () => {
       socketTimeoutMS: 60000,
     };
 
-    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).catch((err) => {
-      cached.promise = null;
-      throw err;
-    });
+    console.log("⏳ Connecting to DB...");
+
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts)
+      .then((mongooseInstance) => {
+        console.log("✅ DB Connected");
+        return mongooseInstance;
+      })
+      .catch((err) => {
+        cached.promise = null;
+        console.log("❌ DB connection failed:", err.message);
+        throw err;
+      });
   }
 
   cached.conn = await cached.promise;
